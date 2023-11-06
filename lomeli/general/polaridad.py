@@ -22,7 +22,7 @@ pol_x = pd.read_csv("/home/cygnus/Documentos/khorda_data/lomeli/twitter/df_comen
 
 polaridad = pd.concat([pol_insta, pol_tiktok, pol_x], axis=0)
 
-
+polaridad.to_csv("polaridad.csv")
 
 fig = go.Figure()
 fig.add_trace(go.Histogram(x=polaridad.polaridad, histnorm='probability', marker_color='blue'))

@@ -21,8 +21,13 @@ emocion_insta = pd.read_csv("/home/cygnus/Documentos/khorda_data/lomeli/insta/co
 
 emocion = pd.concat([emocion_fb, emocion_x, emocion_tiktok, emocion_insta], axis=0)
 
-# Crear un gráfico de violín con Plotly Express
-fig = px.violin(emocion, x='emocion', title='Distribución de Emociones en Forma de Violín', points="all")
+emocion.to_csv("emocion.csv")
+
+conteo_emociones = emocion['emocion'].value_counts().reset_index()
+conteo_emociones.columns = ['Emoción', 'Cantidad']
+
+# Crear un treemap con Plotly Express
+fig = px.treemap(conteo_emociones, path=['Emoción'], values='Cantidad', title='Treemap de Emociones')
 plot(fig)
 
 
