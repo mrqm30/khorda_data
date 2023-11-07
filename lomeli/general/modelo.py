@@ -35,10 +35,10 @@ import seaborn as sns
 
 
 ##############################DataFrame################################
-coments_x = pd.read_csv("/home/cygnus/Documentos/khorda_data/lomeli/twitter/coments_x.csv", usecols=["texto"])
-coments_tiktok = pd.read_csv("/home/cygnus/Documentos/khorda_data/lomeli/tiktok/coments_tiktok.csv", usecols=["texto"])
-coments_insta = pd.read_csv("/home/cygnus/Documentos/khorda_data/lomeli/insta/coments_insta.csv", usecols=["texto"])
-coments_fb = pd.read_csv("/home/cygnus/Documentos/khorda_data/lomeli/facebook/coments_fb.csv", usecols=["texto"])
+coments_x = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/twitter/coments_x.csv", usecols=["texto"])
+coments_tiktok = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/tiktok/coments_tiktok.csv", usecols=["texto"])
+coments_insta = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/insta/coments_insta.csv", usecols=["texto"])
+coments_fb = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/facebook/coments_fb.csv", usecols=["texto"])
 
 # Concatenar todos los dataframes
 
@@ -182,4 +182,4 @@ for topic in topics:
 ########################################
 pyLDAvis.enable_notebook()
 viz = pyLDAvis.gensim.prepare(lda_model, corpus, dictionary)
-viz
+print(type(viz))
