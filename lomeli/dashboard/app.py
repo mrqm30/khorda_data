@@ -77,6 +77,32 @@ conteo_emociones.columns = ['Emoción', 'Cantidad']
 fig_treemap = px.treemap(conteo_emociones, path=['Emoción'], values='Cantidad')
 
 
+# Crear radar
+social = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/social.csv")
+social_group = social.groupby('red_social').sum().reset_index()
+fig_radar = go.Figure()
+for col in ['views_reactions_log']:#'comentarios','repost','likes',
+  fig_radar.add_trace(go.Barpolar(#Scatterpolar
+      r=social_group[col],
+      theta=social_group.red_social,
+      #fill='toself',
+      name = col,
+      hoverinfo='text',
+      hovertext=[f"RS : {elem.red_social}; Views : {int(elem[col])}" for _, elem in social_group.iterrows()],
+      opacity=0.68
+      ))
+fig_radar.update_layout(
+  polar=dict(
+    radialaxis=dict(
+      visible=True
+    )),
+  showlegend=False,
+  font_size=8,
+  legend_font_size=8,
+  height=500,
+  width=300
+)
+
 
 ########################################################################
 topics = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/topicos_coments.csv")
@@ -123,7 +149,7 @@ app.layout = html.Div(
                         html.Br(),
                         social_button(app, 'instagram.png', 'Instagram', 'button-4'),
                         html.Br(),
-                        dcc.Graph(id='social-graph')
+                        dcc.Graph(id='social-graph', figure=fig_radar)
                     ]
                 ),
                 html.Div(
