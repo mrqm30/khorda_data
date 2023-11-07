@@ -1,13 +1,85 @@
 import dash
+import numpy as np
+import pandas as pd
+import dash_table
 import dash_html_components as html
 import dash_core_components as dcc
 import plotly.express as px
+import plotly.graph_objects as go
 from dash.dependencies import Input, Output
 
-# Define los datos de ejemplo para los gráficos
-data_1 = px.data.iris()
-data_2 = px.data.gapminder()
-data_3 = px.data.tips()
+import plotly.io as pio
+
+pio.templates['new_template'] = go.layout.Template()
+pio.templates['new_template']['layout']['font'] = {'family': 'verdana', 'size': 16, 'color': 'black'}
+pio.templates['new_template']['layout']['paper_bgcolor'] = '#f3f4f6'
+pio.templates['new_template']['layout']['plot_bgcolor'] = '#f3f4f6'
+pio.templates['new_template']['layout']['xaxis'] = {'title_standoff': 10, 'linecolor': '#f3f4f6', 'mirror': True, 'gridcolor': '#EEEEEE'}
+pio.templates['new_template']['layout']['yaxis'] = {'title_standoff': 10, 'linecolor': '#f3f4f6', 'mirror': True, 'gridcolor': '#EEEEEE'}
+pio.templates['new_template']['layout']['legend_bgcolor'] = 'rgb(117, 112, 179)'
+pio.templates['new_template']['layout']['height'] = 550
+pio.templates['new_template']['layout']['width'] = 600
+pio.templates['new_template']['layout']['autosize'] = False
+
+pio.templates.default = 'new_template'
+##DATOS PARA POLARIDAD 
+polaridad = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/polaridad.csv")
+
+fig = go.Figure()
+fig.add_trace(go.Histogram(x=polaridad.polaridad, histnorm='probability', marker_color='blue'))
+# Personalizar el diseño y agregar elementos visuales
+fig.update_layout(
+    title_text="Distribución de Polaridad",
+    xaxis_title="Polaridad",
+    yaxis_title="Frecuencia",
+    xaxis=dict(showline=True, showgrid=False),
+    yaxis=dict(showline=True, showgrid=False),
+    bargap=0.0,  # Espaciado entre barras
+    bargroupgap=0.0,  # Espaciado entre grupos de barras
+    showlegend=False,  # No mostrar leyenda
+    template="new_template"
+)
+
+mediana = np.median(polaridad)
+
+# Clasificar las polaridades en negativas, neutras y positivas
+negativas = polaridad[(polaridad['polaridad'] > 0.1) & (polaridad['polaridad'] < 0.4)]
+neutras = polaridad[(polaridad['polaridad'] > 0.4) & (polaridad['polaridad'] <= 0.5)]
+positivas = polaridad[(polaridad['polaridad'] > 0.5)]
+
+
+# Contar cuántos elementos hay en cada categoría
+num_negativas = len(negativas)
+num_neutras = len(neutras)
+num_positivas = len(positivas)
+
+# Crear la gráfica de pastel
+labels = ['Negativas', 'Neutras', 'Positivas']
+sizes = [num_negativas, num_neutras, num_positivas]
+colors = ['#00D', '#7B68EE', '#ADFF2F']
+
+fig_pie = go.Figure(data=[go.Pie(labels=labels, hole=0.5,
+                            values=sizes)])
+fig_pie.update_traces(hoverinfo='label+percent', textinfo='value', textfont_size=20,
+                marker=dict(colors=colors, line=dict(color='cyan', width=2)))
+fig_pie.update_layout(template="new_template")
+
+
+
+emociones = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/emocion.csv")
+
+emocion = emociones[emociones['emocion'] != 'neutral']
+
+conteo_emociones = emocion['emocion'].value_counts().reset_index()
+conteo_emociones.columns = ['Emoción', 'Cantidad']
+
+# Crear un treemap con Plotly Express
+fig_treemap = px.treemap(conteo_emociones, path=['Emoción'], values='Cantidad')
+
+
+
+########################################################################
+topics = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/topicos_coments.csv")
 
 # Define una función para crear un botón de redes sociales
 def social_button(app, icon, text, button_id):
@@ -47,11 +119,9 @@ app.layout = html.Div(
                         html.Br(),
                         social_button(app, 'x.png', 'Twitter', 'button-2'),
                         html.Br(),
-                        social_button(app, 'youtube.png', 'YouTube', 'button-3'),
+                        social_button(app, 'facebook.png', 'Facebook', 'button-3'),
                         html.Br(),
-                        social_button(app, 'facebook.png', 'Facebook', 'button-4'),
-                        html.Br(),
-                        social_button(app, 'instagram.png', 'Instagram', 'button-5'),
+                        social_button(app, 'instagram.png', 'Instagram', 'button-4'),
                         html.Br(),
                         dcc.Graph(id='social-graph')
                     ]
@@ -59,12 +129,14 @@ app.layout = html.Div(
                 html.Div(
                     className="bg-gray-100 p-4 col-span-4 md:col-span-4 lg:col-span-4 xl:col-span-4 rounded-lg",
                     children=[
+                        html.H1("Análisis de la Conversación Digital", className="text-center text-4xl font-bold leading-8 text-pink-600"),
+                        html.Br(),
                         html.Div(
                             className="grid gap-3 grid-cols-1 lg:grid-cols-3",
                             children=[
-                                dcc.Graph(id="graph-1"),
-                                dcc.Graph(id="graph-2"),
-                                dcc.Graph(id="graph-3")
+                                dcc.Graph(figure=fig_pie),
+                                html.Img(src=app.get_asset_url("coments.png")),
+                                dcc.Graph(figure=fig_treemap)
                             ]
                         ),
                         html.Br(),
@@ -126,13 +198,47 @@ app.layout = html.Div(
                             className="col-span-2 mt-5",
                             children=[
                                 html.Div(
-                                    className="grid gap-1 grid-cols-1 lg:grid-cols-2",
+                                    className="grid gap-1 grid-cols-1 lg:grid-cols-1",
                                     children=[
+                                        html.Div(
+                                            className="transform  shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-100 text-gray-900 px-4 py-2",
+                                            children=[
+                                                html.H1("Temas Emergentes", className="text-center text-4xl font-bold leading-8 text-pink-600")
+                                            ]
+                                        ),
+                                        html.Div(
+                                            className="transform  shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-100 text-gray-900 px-4 py-2",
+                                            children=[
+                                                html.Div([
+                                                    dash_table.DataTable(
+                                                        id='editable-table',
+                                                        columns=[
+                                                            {'name': col, 'id': col, 'editable': True} for col in topics.columns
+                                                        ],
+                                                        data=topics.to_dict('records'),
+                                                        style_table={'height': '400px', 'overflowY': 'auto'},
+                                                    ),
+                                                    html.A("Descargar DataFrame", id="download-link", download="edited_dataframe.csv", href="", target="_blank"),
+                                                ])
 
+                                            ]
+                                        ),
+                                        html.Div(
+                                            className="transform  shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-100 text-gray-900 px-4 py-2",
+                                            style={'width': '100%', 'height': '600px'}, 
+                                            children=[
+                                                
+                                                    html.Iframe(src=app.get_asset_url("ldavis_visualization.html"),
+                                                                style={'position':"relative", 'width':"100%", 'height':"100%"})
+                                                
+                                            ]
+                                        )
+                                    
                                     ]
                                 )
                             ]
                         ),
+                        html.Br(),
                     ]
                 )
             ]
@@ -140,35 +246,18 @@ app.layout = html.Div(
     ]
 )
 
-# Callback para generar gráficos diferentes en respuesta a los botones
+
+
+
 @app.callback(
-    Output('social-graph', 'figure'),
-    Output('graph-1', 'figure'),
-    Output('graph-2', 'figure'),
-    Output('graph-3', 'figure'),
-    Input('button-1', 'n_clicks'),
-    Input('button-2', 'n_clicks'),
-    Input('button-3', 'n_clicks')
+    Output("download-link", "href"),
+    Input('editable-table', 'data')
 )
-def update_graph(button1_clicks, button2_clicks, button3_clicks):
-    ctx = dash.callback_context
-    button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-
-    if button_id == 'button-1':
-        figure = px.scatter(data_1, x='sepal_width', y='sepal_length', color='species')
-    elif button_id == 'button-2':
-        figure = px.scatter(data_2, x='gdpPercap', y='lifeExp', color='continent')
-    elif button_id == 'button-3':
-        figure = px.scatter(data_3, x='total_bill', y='tip', color='sex')
-    else:
-        figure = px.scatter(data_1, x='sepal_width', y='sepal_length', color='species')
-
-    figure.update_layout(
-        plot_bgcolor='rgba(0, 0, 0, 0)',
-        paper_bgcolor='rgba(0, 0, 0, 0)'
-    )
-
-    return figure, figure, figure, figure
+def update_csv(data):
+    edited_df = pd.DataFrame(data)
+    csv_string = edited_df.to_csv(index=False, encoding='utf-8')
+    csv_string = "data:text/csv;charset=utf-8"
+    return csv_string
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8060)
