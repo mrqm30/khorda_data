@@ -60,9 +60,24 @@ colors = ['#00D', '#7B68EE', '#ADFF2F']
 
 fig_pie = go.Figure(data=[go.Pie(labels=labels, hole=0.5,
                             values=sizes)])
-fig_pie.update_traces(hoverinfo='label+percent', textinfo='value', textfont_size=20,
-                marker=dict(colors=colors, line=dict(color='cyan', width=2)))
-fig_pie.update_layout(template="new_template")
+fig_pie.update_traces(
+    hoverinfo='label+percent',
+    textinfo='value+percent',
+    textfont_size=20,
+    marker=dict(
+        colors=colors,
+        line=dict(color='cyan', width=2)))
+fig_pie.update_layout(
+    title="Distribución de Polaridad",
+    font=dict(family="Arial", size=20, color="black"),
+    template="new_template",
+    margin=dict(l=0, r=0, b=0, t=50),
+    legend=dict(
+        orientation='h',
+        x=0.2,
+        y=-0.2
+    )
+)
 
 
 
@@ -75,6 +90,26 @@ conteo_emociones.columns = ['Emoción', 'Cantidad']
 
 # Crear un treemap con Plotly Express
 fig_treemap = px.treemap(conteo_emociones, path=['Emoción'], values='Cantidad')
+# Personaliza el diseño
+fig_treemap.update_layout(
+    title='Distribución de Emociones',  # Cambia el título según tu preferencia
+    margin=dict(l=0, r=0, b=0, t=50),  # Ajusta los márgenes
+    font=dict(family="Arial", size=16, color="black"),  # Personaliza la fuente
+    paper_bgcolor='#f3f4f6',  # Establece el color de fondo
+    treemapcolorway=['blue', 'green', 'red', 'orange', 'purple'],  # Colores personalizados
+    showlegend=False ,
+    template = "new_template"
+)
+
+# Personaliza el treemap
+fig_treemap.update_traces(
+    textinfo='label+percent entry',  # Muestra etiquetas y porcentaje
+    branchvalues="total"  # Rama con valores totales
+)
+
+# Ajusta el tamaño de la fuente del título y las etiquetas
+fig_treemap.update_layout(title_font_size=22)
+fig_treemap.update_traces(textfont_size=22)
 
 
 # Crear radar
@@ -89,23 +124,54 @@ for col in ['views_reactions_log']:#'comentarios','repost','likes',
       name = col,
       hoverinfo='text',
       hovertext=[f"RS : {elem.red_social}; Views : {int(elem[col])}" for _, elem in social_group.iterrows()],
-      opacity=0.68
+      opacity=0.5
       ))
 fig_radar.update_layout(
   polar=dict(
-    radialaxis=dict(
-      visible=True
-    )),
+  bgcolor='rgba(0,0,0,0)', 
+  radialaxis=dict(
+      visible=False
+    ),
+    angularaxis=dict(
+    direction='counterclockwise',  # Para cambiar la dirección del eje theta
+        )),
   showlegend=False,
-  font_size=8,
-  legend_font_size=8,
+  font_size=16,
+  legend_font_size=12,
   height=500,
-  width=300
+  width=500,
+  template='new_template'
 )
 
 
+fig_radar_2 = go.Figure()
+for col in ['comentarios','repost','likes','views_reactions_log']:
+  fig_radar_2.add_trace(go.Barpolar(
+      r=social_group[col],
+      theta=social_group.red_social,
+      name = col,
+      hoverinfo='text',
+      hovertext=[f"RS : {elem.red_social}; Views : {int(elem[col])}" for _, elem in social_group.iterrows()],
+      opacity=0.5
+      ))
+fig_radar_2.update_layout(
+  polar=dict(
+    radialaxis=dict(
+      visible=False
+    )),
+  showlegend=True,
+  font_size=16,
+  legend_font_size=16,
+  height=500,
+  width=500,
+  template="new_template",
+  legend=dict(
+        x=0.3,  # Centrado horizontalmente
+        y=-1  # Colocado en la parte superior
+    )
+)
 ########################################################################
-topics = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/topicos_coments.csv")
+topics = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/topicos.csv")
 
 # Define una función para crear un botón de redes sociales
 def social_button(app, icon, text, button_id):
@@ -149,9 +215,27 @@ app.layout = html.Div(
                         html.Br(),
                         social_button(app, 'instagram.png', 'Instagram', 'button-4'),
                         html.Br(),
-                        dcc.Graph(id='social-graph', figure=fig_radar)
+                        html.Div(
+                        className="flex items-center justify-center",
+                        children=[dcc.Graph(id='social-graph', figure=fig_radar)]),
+                        html.Br(),
+                        html.Div(
+                        className="flex items-center justify-center",
+                        children=[dcc.Graph(id='social-graph_2', figure=fig_radar_2)]),
                     ]
                 ),
+
+
+
+
+
+
+
+
+
+
+
+
                 html.Div(
                     className="bg-gray-100 p-4 col-span-4 md:col-span-4 lg:col-span-4 xl:col-span-4 rounded-lg",
                     children=[
