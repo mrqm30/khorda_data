@@ -12,14 +12,14 @@ import plotly.io as pio
 
 pio.templates['new_template'] = go.layout.Template()
 pio.templates['new_template']['layout']['font'] = {'family': 'verdana', 'size': 16, 'color': 'black'}
-pio.templates['new_template']['layout']['paper_bgcolor'] = '#f3f4f6'
-pio.templates['new_template']['layout']['plot_bgcolor'] = '#f3f4f6'
-pio.templates['new_template']['layout']['xaxis'] = {'title_standoff': 10, 'linecolor': '#f3f4f6', 'mirror': True, 'gridcolor': '#EEEEEE'}
-pio.templates['new_template']['layout']['yaxis'] = {'title_standoff': 10, 'linecolor': '#f3f4f6', 'mirror': True, 'gridcolor': '#EEEEEE'}
-pio.templates['new_template']['layout']['legend_bgcolor'] = 'rgb(117, 112, 179)'
-pio.templates['new_template']['layout']['height'] = 550
-pio.templates['new_template']['layout']['width'] = 600
-pio.templates['new_template']['layout']['autosize'] = False
+pio.templates['new_template']['layout']['paper_bgcolor'] = '#e5e7eb'
+pio.templates['new_template']['layout']['plot_bgcolor'] = '#e5e7eb'
+pio.templates['new_template']['layout']['xaxis'] = {'title_standoff': 10, 'linecolor': '#e5e7eb', 'mirror': True, 'gridcolor': '#e5e7eb'}
+pio.templates['new_template']['layout']['yaxis'] = {'title_standoff': 10, 'linecolor': '#e5e7eb', 'mirror': True, 'gridcolor': '#e5e7eb'}
+pio.templates['new_template']['layout']['legend_bgcolor'] = '#e5e7eb'
+pio.templates['new_template']['layout']['height'] = 600
+pio.templates['new_template']['layout']['width'] = 800
+pio.templates['new_template']['layout']['autosize'] = True
 
 pio.templates.default = 'new_template'
 ##DATOS PARA POLARIDAD 
@@ -58,7 +58,7 @@ labels = ['Negativas', 'Neutras', 'Positivas']
 sizes = [num_negativas, num_neutras, num_positivas]
 colors = ['#00D', '#7B68EE', '#ADFF2F']
 
-fig_pie = go.Figure(data=[go.Pie(labels=labels, hole=0.5,
+fig_pie = go.Figure(data=[go.Pie(labels=labels, hole=0.6,
                             values=sizes)])
 fig_pie.update_traces(
     hoverinfo='label+percent',
@@ -66,15 +66,16 @@ fig_pie.update_traces(
     textfont_size=20,
     marker=dict(
         colors=colors,
-        line=dict(color='cyan', width=2)))
+        line=dict(color='#831843', width=2)))
 fig_pie.update_layout(
     title="Distribución de Polaridad",
-    font=dict(family="Arial", size=20, color="black"),
+    font=dict(family="Arial", size=20, color="#831843"),
+    annotations=[dict(text='Polaridad', x=0.5, y=0.5, font_size=24, showarrow=False)],
     template="new_template",
     margin=dict(l=0, r=0, b=0, t=50),
     legend=dict(
         orientation='h',
-        x=0.2,
+        x=0.25,
         y=-0.2
     )
 )
@@ -89,14 +90,14 @@ conteo_emociones = emocion['emocion'].value_counts().reset_index()
 conteo_emociones.columns = ['Emoción', 'Cantidad']
 
 # Crear un treemap con Plotly Express
-fig_treemap = px.treemap(conteo_emociones, path=['Emoción'], values='Cantidad')
+fig_treemap = px.treemap(conteo_emociones, path=['Emoción'], values='Cantidad',color_continuous_scale='Blues')
 # Personaliza el diseño
 fig_treemap.update_layout(
     title='Distribución de Emociones',  # Cambia el título según tu preferencia
     margin=dict(l=0, r=0, b=0, t=50),  # Ajusta los márgenes
     font=dict(family="Arial", size=16, color="black"),  # Personaliza la fuente
-    paper_bgcolor='#f3f4f6',  # Establece el color de fondo
-    treemapcolorway=['blue', 'green', 'red', 'orange', 'purple'],  # Colores personalizados
+    paper_bgcolor='#e5e7eb',  # Establece el color de fondo
+    #treemapcolorway=['blue', 'green', 'red', 'orange', 'purple'],  # Colores personalizados
     showlegend=False ,
     template = "new_template"
 )
@@ -224,21 +225,35 @@ app.layout = html.Div(
                         children=[dcc.Graph(id='social-graph_2', figure=fig_radar_2)]),
                     ]
                 ),
-
-
-
-
-
-
-
-
-
-
-
-
                 html.Div(
-                    className="bg-gray-100 p-4 col-span-4 md:col-span-4 lg:col-span-4 xl:col-span-4 rounded-lg",
+                    className="bg-white-100 p-4 col-span-4 md:col-span-4 lg:col-span-4 xl:col-span-4 rounded-lg",
                     children=[
+                    html.Div("Análisis de la Conversación digital", className="text-center text-4xl font-bold leading-8 text-pink-600"),
+                    html.Br(),
+                    html.Div(className="grid gap-3 grid-cols-1 lg:grid-cols-2",
+                                children=[
+                                html.Div(className="grid gap-3 grid-cols-1 lg:grid-cols-1",
+                                        children=[
+                                        html.Div(
+                                            className="flex justify-center items-center",
+                                            children=[
+                                        html.Div(className="shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-200 text-white-900 px-4 py-2",
+                                                children=[dcc.Graph(figure=fig_pie)])])
+                                            ]),
+                                html.Div(className="grid gap-3 grid-cols-1 lg:grid-cols-1",
+                                        children=[
+                                        html.Div(className="flex justify-center items-center shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-200 text-white-900 px-4 py-2",
+                                        children=[
+                                        html.Img(src=app.get_asset_url("posts.png"), style={'width': '800px', 'height': '600px', 'border-radius': '5%'}),
+                                        ])
+                                        ])
+                                ]),
+                    html.Br(),
+                    html.Div(className="grid gap-3 grid-cols-1 lg:grid-cols-1",
+                            children=[
+                            html.Div(className="shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-200 text-white-900 px-4 py-2",
+                                    children=[dcc.Graph(figure=fig_treemap)])
+                            ]),
                         html.H1("Análisis de la Conversación Digital", className="text-center text-4xl font-bold leading-8 text-pink-600"),
                         html.Br(),
                         html.Div(
