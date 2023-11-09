@@ -1,3 +1,4 @@
+import os
 import dash
 import numpy as np
 import pandas as pd
@@ -7,8 +8,9 @@ import dash_core_components as dcc
 import plotly.express as px
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output
-
 import plotly.io as pio
+
+path = "/home/cygnus/Documentos/khorda_data/lomeli/dashboard/data/"
 
 pio.templates['new_template'] = go.layout.Template()
 pio.templates['new_template']['layout']['font'] = {'family': 'verdana', 'size': 16, 'color': 'black'}
@@ -23,7 +25,7 @@ pio.templates['new_template']['layout']['autosize'] = True
 
 pio.templates.default = 'new_template'
 ##DATOS PARA POLARIDAD 
-polaridad = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/polaridad.csv")
+polaridad = pd.read_csv("/home/cygnus/Documentos/khorda_data/lomeli/dashboard/data/polaridad.csv")
 
 fig = go.Figure()
 fig.add_trace(go.Histogram(x=polaridad.polaridad, histnorm='probability', marker_color='blue'))
@@ -56,21 +58,20 @@ num_positivas = len(positivas)
 # Crear la gráfica de pastel
 labels = ['Negativas', 'Neutras', 'Positivas']
 sizes = [num_negativas, num_neutras, num_positivas]
-colors = ['#00D', '#7B68EE', '#ADFF2F']
+colors = ['#4c1d95', '#7B68EE', '#9333ea']
 
 fig_pie = go.Figure(data=[go.Pie(labels=labels, hole=0.6,
                             values=sizes)])
 fig_pie.update_traces(
-    hoverinfo='label+percent',
-    textinfo='value+percent',
+    hoverinfo='label',
+    textinfo='percent',
     textfont_size=20,
     marker=dict(
         colors=colors,
-        line=dict(color='#831843', width=2)))
+        line=dict(color='#db2777', width=2)))
 fig_pie.update_layout(
-    title="Distribución de Polaridad",
-    font=dict(family="Arial", size=20, color="#831843"),
-    annotations=[dict(text='Polaridad', x=0.5, y=0.5, font_size=24, showarrow=False)],
+    font=dict(family="Arial", size=20, color="#db2777"),
+    annotations=[dict(text='Polaridad', x=0.5, y=0.5, font_size=32, showarrow=False)],
     template="new_template",
     margin=dict(l=0, r=0, b=0, t=50),
     legend=dict(
@@ -82,7 +83,7 @@ fig_pie.update_layout(
 
 
 
-emociones = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/emocion.csv")
+emociones = pd.read_csv("/home/cygnus/Documentos/khorda_data/lomeli/dashboard/data/emocion.csv")
 
 emocion = emociones[emociones['emocion'] != 'neutral']
 
@@ -95,7 +96,7 @@ fig_treemap = px.treemap(conteo_emociones, path=['Emoción'], values='Cantidad',
 fig_treemap.update_layout(
     title='Distribución de Emociones',  # Cambia el título según tu preferencia
     margin=dict(l=0, r=0, b=0, t=50),  # Ajusta los márgenes
-    font=dict(family="Arial", size=16, color="black"),  # Personaliza la fuente
+    font=dict(family="Arial", size=16, color="#db2777"),  # Personaliza la fuente
     paper_bgcolor='#e5e7eb',  # Establece el color de fondo
     #treemapcolorway=['blue', 'green', 'red', 'orange', 'purple'],  # Colores personalizados
     showlegend=False ,
@@ -105,16 +106,17 @@ fig_treemap.update_layout(
 # Personaliza el treemap
 fig_treemap.update_traces(
     textinfo='label+percent entry',  # Muestra etiquetas y porcentaje
-    branchvalues="total"  # Rama con valores totales
+    branchvalues="total", # Rama con valores totales
+    textposition='middle center'
 )
 
 # Ajusta el tamaño de la fuente del título y las etiquetas
-fig_treemap.update_layout(title_font_size=22)
-fig_treemap.update_traces(textfont_size=22)
+fig_treemap.update_layout(title_font_size=28)
+fig_treemap.update_traces(textfont_size=32)
 
 
 # Crear radar
-social = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/social.csv")
+social = pd.read_csv("/home/cygnus/Documentos/khorda_data/lomeli/dashboard/data/social.csv")
 social_group = social.groupby('red_social').sum().reset_index()
 fig_radar = go.Figure()
 for col in ['views_reactions_log']:#'comentarios','repost','likes',
@@ -172,7 +174,7 @@ fig_radar_2.update_layout(
     )
 )
 ########################################################################
-topics = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/topicos.csv")
+topics = pd.read_csv("/home/cygnus/Documentos/khorda_data/lomeli/dashboard/data/topicos.csv")
 
 # Define una función para crear un botón de redes sociales
 def social_button(app, icon, text, button_id):
@@ -228,7 +230,7 @@ app.layout = html.Div(
                 html.Div(
                     className="bg-white-100 p-4 col-span-4 md:col-span-4 lg:col-span-4 xl:col-span-4 rounded-lg",
                     children=[
-                    html.Div("Análisis de la Conversación digital", className="text-center text-4xl font-bold leading-8 text-pink-600"),
+                    html.Div("Análisis de la Conversación particular", className="text-center text-4xl font-bold leading-8 text-pink-600"),
                     html.Br(),
                     html.Div(className="grid gap-3 grid-cols-1 lg:grid-cols-2",
                                 children=[
@@ -254,6 +256,7 @@ app.layout = html.Div(
                             html.Div(className="shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-200 text-white-900 px-4 py-2",
                                     children=[dcc.Graph(figure=fig_treemap)])
                             ]),
+                    html.Br(),
                         html.H1("Análisis de la Conversación Digital", className="text-center text-4xl font-bold leading-8 text-pink-600"),
                         html.Br(),
                         html.Div(
@@ -362,8 +365,7 @@ app.layout = html.Div(
                                     ]
                                 )
                             ]
-                        ),
-                        html.Br(),
+                        )
                     ]
                 )
             ]
