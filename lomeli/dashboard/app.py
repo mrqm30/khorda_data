@@ -1,4 +1,4 @@
-import os
+import io
 import dash
 import numpy as np
 import pandas as pd
@@ -9,8 +9,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash.dependencies import Input, Output
 import plotly.io as pio
-
-path = "/home/cygnus/Documentos/khorda_data/lomeli/dashboard/data/"
+from dash.exceptions import PreventUpdate
+import dash.exceptions
 
 pio.templates['new_template'] = go.layout.Template()
 pio.templates['new_template']['layout']['font'] = {'family': 'verdana', 'size': 16, 'color': 'black'}
@@ -25,29 +25,22 @@ pio.templates['new_template']['layout']['autosize'] = True
 
 pio.templates.default = 'new_template'
 ##DATOS PARA POLARIDAD 
-polaridad = pd.read_csv("/home/cygnus/Documentos/khorda_data/lomeli/dashboard/data/polaridad.csv")
-
-fig = go.Figure()
-fig.add_trace(go.Histogram(x=polaridad.polaridad, histnorm='probability', marker_color='blue'))
-# Personalizar el diseño y agregar elementos visuales
-fig.update_layout(
-    title_text="Distribución de Polaridad",
-    xaxis_title="Polaridad",
-    yaxis_title="Frecuencia",
-    xaxis=dict(showline=True, showgrid=False),
-    yaxis=dict(showline=True, showgrid=False),
-    bargap=0.0,  # Espaciado entre barras
-    bargroupgap=0.0,  # Espaciado entre grupos de barras
-    showlegend=False,  # No mostrar leyenda
-    template="new_template"
-)
+polaridad = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/polaridad.csv")
+polaridad_posts = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/polaridad_posts.csv")
 
 mediana = np.median(polaridad)
+mediana_posts = np.median(polaridad_posts)
+
 
 # Clasificar las polaridades en negativas, neutras y positivas
 negativas = polaridad[(polaridad['polaridad'] > 0.1) & (polaridad['polaridad'] < 0.4)]
 neutras = polaridad[(polaridad['polaridad'] > 0.4) & (polaridad['polaridad'] <= 0.5)]
 positivas = polaridad[(polaridad['polaridad'] > 0.5)]
+
+# Clasificar las polaridades en negativas, neutras y positivas
+negativas_posts = polaridad_posts[(polaridad_posts['polaridad'] > 0.2) & (polaridad_posts['polaridad'] < 0.4)]
+neutras_posts = polaridad_posts[(polaridad_posts['polaridad'] > 0.4) & (polaridad_posts['polaridad'] <= 0.5)]
+positivas_posts = polaridad_posts[(polaridad_posts['polaridad'] > 0.5)]
 
 
 # Contar cuántos elementos hay en cada categoría
@@ -55,6 +48,10 @@ num_negativas = len(negativas)
 num_neutras = len(neutras)
 num_positivas = len(positivas)
 
+# Contar cuántos elementos hay en cada categoría
+num_negativas_posts = len(negativas_posts)
+num_neutras_posts = len(neutras_posts)
+num_positivas_posts = len(positivas_posts)
 # Crear la gráfica de pastel
 labels = ['Negativas', 'Neutras', 'Positivas']
 sizes = [num_negativas, num_neutras, num_positivas]
@@ -81,15 +78,45 @@ fig_pie.update_layout(
     )
 )
 
+# Crear la gráfica de pastel
+labels = ['Negativas', 'Neutras', 'Positivas']
+sizes = [num_negativas_posts, num_neutras_posts, num_positivas_posts]
+colors = ['#4c1d95', '#7B68EE', '#9333ea']
+
+fig_pie_posts = go.Figure(data=[go.Pie(labels=labels, hole=0.6,
+                            values=sizes)])
+fig_pie_posts.update_traces(
+    hoverinfo='label',
+    textinfo='percent',
+    textfont_size=20,
+    marker=dict(
+        colors=colors,
+        line=dict(color='#db2777', width=2)))
+fig_pie_posts.update_layout(
+    font=dict(family="Arial", size=20, color="#db2777"),
+    annotations=[dict(text='Polaridad', x=0.5, y=0.5, font_size=32, showarrow=False)],
+    template="new_template",
+    margin=dict(l=0, r=0, b=0, t=50),
+    legend=dict(
+        orientation='h',
+        x=0.25,
+        y=-0.2
+    )
+)
 
 
-emociones = pd.read_csv("/home/cygnus/Documentos/khorda_data/lomeli/dashboard/data/emocion.csv")
+
+emociones = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/emocion.csv")
+emociones_posts = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/emocion_posts.csv")
 
 emocion = emociones[emociones['emocion'] != 'neutral']
+emocion_posts = emociones_posts[emociones_posts['emocion'] != 'neutral']
 
 conteo_emociones = emocion['emocion'].value_counts().reset_index()
 conteo_emociones.columns = ['Emoción', 'Cantidad']
 
+conteo_emociones_posts = emocion_posts['emocion'].value_counts().reset_index()
+conteo_emociones_posts.columns = ['Emoción', 'Cantidad']
 # Crear un treemap con Plotly Express
 fig_treemap = px.treemap(conteo_emociones, path=['Emoción'], values='Cantidad',color_continuous_scale='Blues')
 # Personaliza el diseño
@@ -115,8 +142,31 @@ fig_treemap.update_layout(title_font_size=28)
 fig_treemap.update_traces(textfont_size=32)
 
 
+# Crear un treemap con Plotly Express
+fig_treemap_posts = px.treemap(conteo_emociones_posts, path=['Emoción'], values='Cantidad',color_continuous_scale='Blues')
+# Personaliza el diseño
+fig_treemap_posts.update_layout(
+    title='Distribución de Emociones',  # Cambia el título según tu preferencia
+    margin=dict(l=0, r=0, b=0, t=50),  # Ajusta los márgenes
+    font=dict(family="Arial", size=16, color="#db2777"),  # Personaliza la fuente
+    paper_bgcolor='#e5e7eb',  # Establece el color de fondo
+    #treemapcolorway=['blue', 'green', 'red', 'orange', 'purple'],  # Colores personalizados
+    showlegend=False ,
+    template = "new_template"
+)
+
+# Personaliza el treemap
+fig_treemap_posts.update_traces(
+    textinfo='label+percent entry',  # Muestra etiquetas y porcentaje
+    branchvalues="total", # Rama con valores totales
+    textposition='middle center'
+)
+
+# Ajusta el tamaño de la fuente del título y las etiquetas
+fig_treemap_posts.update_layout(title_font_size=28)
+fig_treemap_posts.update_traces(textfont_size=32)
 # Crear radar
-social = pd.read_csv("/home/cygnus/Documentos/khorda_data/lomeli/dashboard/data/social.csv")
+social = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/social.csv")
 social_group = social.groupby('red_social').sum().reset_index()
 fig_radar = go.Figure()
 for col in ['views_reactions_log']:#'comentarios','repost','likes',
@@ -174,7 +224,8 @@ fig_radar_2.update_layout(
     )
 )
 ########################################################################
-topics = pd.read_csv("/home/cygnus/Documentos/khorda_data/lomeli/dashboard/data/topicos.csv")
+topics = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/topicos.csv")
+topicos = pd.read_csv("/home/milton/Documentos/khorda_data/lomeli/dashboard/data/topicos_posts.csv")
 
 # Define una función para crear un botón de redes sociales
 def social_button(app, icon, text, button_id):
@@ -240,7 +291,7 @@ app.layout = html.Div(
                                             className="flex justify-center items-center",
                                             children=[
                                         html.Div(className="shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-200 text-white-900 px-4 py-2",
-                                                children=[dcc.Graph(figure=fig_pie)])])
+                                                children=[dcc.Graph(figure=fig_pie_posts)])])
                                             ]),
                                 html.Div(className="grid gap-3 grid-cols-1 lg:grid-cols-1",
                                         children=[
@@ -254,118 +305,125 @@ app.layout = html.Div(
                     html.Div(className="grid gap-3 grid-cols-1 lg:grid-cols-1",
                             children=[
                             html.Div(className="shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-200 text-white-900 px-4 py-2",
+                                    children=[dcc.Graph(figure=fig_treemap_posts)])
+                            ]),
+                    html.Br(),
+                    html.Div(className="grid gap-3 grid-cols-1 lg:grid-cols-1",
+                    children=[
+                        html.H1("Topics y Temas Emergentes", className="text-center text-4xl font-bold leading-8 text-pink-600"),
+                        dash_table.DataTable(
+                            id='editable-table_2',
+                            columns=[{'name': col, 'id': col, 'editable': True} for col in topicos.columns],
+                            data=topicos.to_dict('records'),
+                            editable=True,
+                            style_table={'overflowX': 'auto'},
+                            style_cell={
+                                'minWidth': '0px', 'maxWidth': '180px',
+                                'whiteSpace': 'normal',
+                            },
+                            style_header={
+                                'backgroundColor': 'rgb(230, 230, 230)',
+                                'fontWeight': 'bold'
+                            },
+                            style_data_conditional=[
+                                {
+                                    'if': {'column_editable': True},
+                                    'backgroundColor': 'rgba(245, 0, 87, 0.1)',
+                                    'border': '1px solid #e91e63',
+                                },
+                            ],
+                            ),
+
+        html.Div([
+            html.Button("Descargar CSV", id="btn_csv", n_clicks=0, className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2'),
+            html.Button("Descargar Excel", id="btn_excel", n_clicks=0, className='bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded'),
+        ], className='mt-4'),
+
+        dcc.Download(id="download-data"),
+                    ]),
+                    html.Br(),
+                        html.Div(
+                            className="transform  shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-100 text-gray-900 px-4 py-2",
+                                style={'width': '100%', 'height': '600px'}, 
+                                    children=[
+                                                
+                                    html.Iframe(src=app.get_asset_url("ldavis_visualization_posts.html"),
+                                                                style={'position':"center", 'width':"100%", 'height':"100%"})
+                                                
+                                            ]
+                                        ),
+                    html.Br(),
+                    html.Div("Análisis de la Conversación digital", className="text-center text-4xl font-bold leading-8 text-pink-600"),
+                    html.Br(),
+                    html.Div(className="grid gap-3 grid-cols-1 lg:grid-cols-2",
+                                children=[
+                                html.Div(className="grid gap-3 grid-cols-1 lg:grid-cols-1",
+                                        children=[
+                                        html.Div(
+                                            className="flex justify-center items-center",
+                                            children=[
+                                        html.Div(className="shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-200 text-white-900 px-4 py-2",
+                                                children=[dcc.Graph(figure=fig_pie)])])
+                                            ]),
+                                html.Div(className="grid gap-3 grid-cols-1 lg:grid-cols-1",
+                                        children=[
+                                        html.Div(className="flex justify-center items-center shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-200 text-white-900 px-4 py-2",
+                                        children=[
+                                        html.Img(src=app.get_asset_url("coments.png"), style={'width': '800px', 'height': '600px', 'border-radius': '5%'}),
+                                        ])
+                                        ])
+                                ]),
+                    html.Br(),
+                    html.Div(className="grid gap-3 grid-cols-1 lg:grid-cols-1",
+                            children=[
+                            html.Div(className="shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-200 text-white-900 px-4 py-2",
                                     children=[dcc.Graph(figure=fig_treemap)])
                             ]),
                     html.Br(),
-                        html.H1("Análisis de la Conversación Digital", className="text-center text-4xl font-bold leading-8 text-pink-600"),
-                        html.Br(),
-                        html.Div(
-                            className="grid gap-3 grid-cols-1 lg:grid-cols-3",
-                            children=[
-                                dcc.Graph(figure=fig_pie),
-                                html.Img(src=app.get_asset_url("coments.png")),
-                                dcc.Graph(figure=fig_treemap)
-                            ]
-                        ),
-                        html.Br(),
-                        html.Div(
-                            className="grid gap-4 grid-cols-1 lg:grid-cols-4",
-                            children=[
-                                html.Div(
-                                    className="col-span-1 sm:col-span-1 xl:col-span-1",
-                                    children=[
-                                        html.Div(
-                                            className="transform hover:scale-105 transition duration-300 shadow-2xl rounded-lg bg-gradient-to-r from-pink-700 to-pink-900 text-white-900 px-4 py-2",
-                                            children=[
-                                                html.Img(src=app.get_asset_url("comentarios.svg"), style={'width': '50px', 'height': '50px'}),
-                                                html.H1("Comentarios")
-                                            ]
-                                        )
-                                    ]
-                                ),
-                                html.Div(
-                                    className="col-span-1 sm:col-span-1 xl:col-span-1",
-                                    children=[
-                                        html.Div(
-                                            className="transform hover:scale-105 transition duration-300 shadow-2xl rounded-lg bg-gradient-to-r from-pink-700 to-pink-900 text-white-900 px-4 py-2",
-                                            children=[
-                                                html.Img(src=app.get_asset_url("flechas-repetir.svg"), style={'width': '50px', 'height': '50px'}),
-                                                html.H1("Reposts")
-                                            ]
-                                        )
-                                    ]
-                                ),
-                                html.Div(
-                                    className="col-span-1 sm:col-span-1 xl:col-span-1",
-                                    children=[
-                                        html.Div(
-                                            className="transform hover:scale-105 transition duration-300 shadow-2xl rounded-lg bg-gradient-to-r from-pink-700 to-pink-900 text-white-900 px-4 py-2",
-                                            children=[
-                                                html.Img(src=app.get_asset_url("pulgares-hacia-arriba.svg"), style={'width': '50px', 'height': '50px'}),
-                                                html.H1("Favoritos")
-                                            ]
-                                        )
-                                    ]
-                                ),
-                                html.Div(
-                                    className="col-span-1 sm:col-span-1 xl:col-span-1",
-                                    children=[
-                                        html.Div(
-                                            className="transform hover:scale-105 transition duration-300 shadow-2xl rounded-lg bg-gradient-to-r from-pink-700 to-pink-900 text-white-900 px-4 py-2",
-                                            children=[
-                                                html.Img(src=app.get_asset_url("ojo.svg"), style={'width': '50px', 'height': '50px'}),
-                                                html.H1("Alcance")
-                                            ]
-                                        )
-                                    ]
-                                )
-                            ]
-                        ),
-                        html.Br(),
-                        html.Div(
-                            className="col-span-2 mt-5",
-                            children=[
-                                html.Div(
-                                    className="grid gap-1 grid-cols-1 lg:grid-cols-1",
-                                    children=[
-                                        html.Div(
-                                            className="transform  shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-100 text-gray-900 px-4 py-2",
-                                            children=[
-                                                html.H1("Temas Emergentes", className="text-center text-4xl font-bold leading-8 text-pink-600")
-                                            ]
-                                        ),
-                                        html.Div(
-                                            className="transform  shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-100 text-gray-900 px-4 py-2",
-                                            children=[
-                                                html.Div([
-                                                    dash_table.DataTable(
-                                                        id='editable-table',
-                                                        columns=[
-                                                            {'name': col, 'id': col, 'editable': True} for col in topics.columns
-                                                        ],
-                                                        data=topics.to_dict('records'),
-                                                        style_table={'height': '400px', 'overflowY': 'auto'},
-                                                    ),
-                                                    html.A("Descargar DataFrame", id="download-link", download="edited_dataframe.csv", href="", target="_blank"),
-                                                ])
+                    html.Div(className="grid gap-3 grid-cols-1 lg:grid-cols-1",
+                    children=[
+                        html.H1("Topics y Temas Emergentes", className="text-center text-4xl font-bold leading-8 text-pink-600"),
+                        dash_table.DataTable(
+                            id='editable-table',
+                            columns=[{'name': col, 'id': col, 'editable': True} for col in topics.columns],
+                            data=topics.to_dict('records'),
+                            editable=True,
+                            style_table={'overflowX': 'auto'},
+                            style_cell={
+                                'minWidth': '0px', 'maxWidth': '180px',
+                                'whiteSpace': 'normal',
+                            },
+                            style_header={
+                                'backgroundColor': 'rgb(230, 230, 230)',
+                                'fontWeight': 'bold'
+                            },
+                            style_data_conditional=[
+                                {
+                                    'if': {'column_editable': True},
+                                    'backgroundColor': 'rgba(245, 0, 87, 0.1)',
+                                    'border': '1px solid #e91e63',
+                                },
+                            ],
+                            ),
 
+        html.Div([
+            html.Button("Descargar CSV", id="btn_csv_2", n_clicks=0, className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mr-2'),
+            html.Button("Descargar Excel", id="btn_excel_2", n_clicks=0, className='bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded'),
+        ], className='mt-4'),
+
+        dcc.Download(id="download-data_2"),
+                    ]),
+                    html.Br(),
+                        html.Div(
+                            className="transform  shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-100 text-gray-900 px-4 py-2",
+                                style={'width': '100%', 'height': '600px'}, 
+                                    children=[
+                                                
+                                    html.Iframe(src=app.get_asset_url("ldavis_visualization.html"),
+                                                                style={'position':"center", 'width':"100%", 'height':"100%"})
+                                                
                                             ]
                                         ),
-                                        html.Div(
-                                            className="transform  shadow-2xl rounded-lg bg-gradient-to-r from-gray-200 to-gray-100 text-gray-900 px-4 py-2",
-                                            style={'width': '100%', 'height': '600px'}, 
-                                            children=[
-                                                
-                                                    html.Iframe(src=app.get_asset_url("ldavis_visualization.html"),
-                                                                style={'position':"relative", 'width':"100%", 'height':"100%"})
-                                                
-                                            ]
-                                        )
-                                    
-                                    ]
-                                )
-                            ]
-                        )
                     ]
                 )
             ]
@@ -375,16 +433,9 @@ app.layout = html.Div(
 
 
 
+# Callback para descargar CSV o Excel
 
-@app.callback(
-    Output("download-link", "href"),
-    Input('editable-table', 'data')
-)
-def update_csv(data):
-    edited_df = pd.DataFrame(data)
-    csv_string = edited_df.to_csv(index=False, encoding='utf-8')
-    csv_string = "data:text/csv;charset=utf-8"
-    return csv_string
+
 
 if __name__ == '__main__':
     app.run_server(debug=True, port=8060)
